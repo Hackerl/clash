@@ -207,12 +207,15 @@ func handleUDPConn(packet *inbound.PacketAdapter) {
 		metadata.DstIP = ips[0]
 	}
 
-	key := packet.LocalAddr().String()
+	key := fmt.Sprintf("%s - %s:%s", packet.LocalAddr().String(), metadata.DstIP.String(), metadata.DstPort)
 
 	handle := func() bool {
 		pc := natTable.Get(key)
 		if pc != nil {
-			handleUDPToRemote(packet, pc, metadata)
+			err := handleUDPToRemote(packet, pc, metadata)
+			if err != nil {
+				log.Warnln("[UDP] send packet to remote failed: %s", err.Error())
+			}
 			return true
 		}
 		return false
